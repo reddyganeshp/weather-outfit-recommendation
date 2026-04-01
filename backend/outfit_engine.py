@@ -1,7 +1,4 @@
-"""
-Outfit Recommendation Engine
-Core business logic: maps weather + occasion → outfit suggestion
-"""
+
 
 from __future__ import annotations
 import random
@@ -9,19 +6,15 @@ from dataclasses import dataclass, field, asdict
 from typing import Optional
 
 
-# ─────────────────────────────────────────────
-#  Data classes
-# ─────────────────────────────────────────────
-
 @dataclass
 class OutfitItem:
-    category: str       # e.g. "top", "bottom", "outerwear"
+    category: str       
     name: str
     description: str
     color_options: list[str]
     weather_tags: list[str]
     occasion_tags: list[str]
-    gender_tags: list[str]   # ["male","female","unisex"]
+    gender_tags: list[str]  
 
 
 @dataclass
@@ -33,11 +26,6 @@ class Recommendation:
     comfort_score: float    # 0-10
     style_notes: str
     color_palette: list[str]
-
-
-# ─────────────────────────────────────────────
-#  Outfit catalogue (static knowledge base)
-# ─────────────────────────────────────────────
 
 OUTFIT_CATALOGUE: list[OutfitItem] = [
     # ── Tops ──
@@ -153,11 +141,6 @@ OUTFIT_CATALOGUE: list[OutfitItem] = [
                ["sunny", "hot"], ["casual", "outdoor"], ["female","unisex"]),
 ]
 
-
-# ─────────────────────────────────────────────
-#  Temperature bands
-# ─────────────────────────────────────────────
-
 def _temp_band(temp: float) -> str:
     if temp >= 28:   return "hot"
     if temp >= 20:   return "warm"
@@ -184,11 +167,6 @@ def _comfort_score(temp: float, humidity: float, wind: float) -> float:
         score -= 1
     return max(0.0, min(10.0, round(score, 1)))
 
-
-# ─────────────────────────────────────────────
-#  Engine class
-# ─────────────────────────────────────────────
-
 class OutfitEngine:
 
     def recommend(
@@ -207,7 +185,6 @@ class OutfitEngine:
         occ = occasion.lower()
         gen = gender.lower()
 
-        # Effective weather tags to match against catalogue
         weather_tags = {weather, band}
         if band in ("cold", "freezing"):
             weather_tags.add("cold")
@@ -222,17 +199,15 @@ class OutfitEngine:
 
         matched = [i for i in OUTFIT_CATALOGUE if _matches(i)]
 
-        # Select one item per category
         categories = ["top", "bottom", "outerwear", "footwear"]
         chosen: list[dict] = []
         for cat in categories:
             pool = [i for i in matched if i.category == cat]
             if not pool:
-                # Fall back to any item in that category
-                pool = [i for i in OUTFIT_CATALOGUE if i.category == cat]
+                              pool = [i for i in OUTFIT_CATALOGUE if i.category == cat]
             if pool:
                 item = random.choice(pool)
-                # Pick color (prefer user's preferences)
+                # Pick color
                 if preferred_colors:
                     color = next(
                         (c for c in preferred_colors
@@ -250,7 +225,7 @@ class OutfitEngine:
                     "all_colors": item.color_options
                 })
 
-        # Skip outerwear when it's hot
+        # Skip
         if band == "hot" and weather not in ("windy", "rainy"):
             chosen = [c for c in chosen if c["category"] != "outerwear"]
 
@@ -263,7 +238,7 @@ class OutfitEngine:
         # Outfit name
         outfit_name = self._outfit_name(band, weather, occ)
 
-        # Color palette
+        #palette
         palette = list({c["chosen_color"] for c in chosen})
 
         return {
@@ -275,8 +250,6 @@ class OutfitEngine:
             "style_notes": self._style_notes(band, occ),
             "color_palette": palette
         }
-
-    # ── helpers ──
 
     def _accessories(self, weather: str, band: str, occasion: str) -> list[str]:
         acc: list[str] = []
