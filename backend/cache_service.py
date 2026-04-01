@@ -1,8 +1,3 @@
-"""
-Cache Service
-In-memory LRU-style cache that simulates Redis/ElastiCache.
-In production: swap for redis-py calls — interface stays identical.
-"""
 
 from __future__ import annotations
 import hashlib
