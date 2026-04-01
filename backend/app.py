@@ -1,8 +1,3 @@
-"""
-Weather-Driven Outfit Recommendation Service
-Your Web Service (Service 1)
-Deployed on: AWS Elastic Beanstalk
-"""
 from __future__ import annotations
 
 from flask import Flask, request, jsonify, send_from_directory
@@ -20,7 +15,7 @@ from db_service import (
     get_all_keys, save_outfit_history, get_outfit_history
 )
 
-# ── Logging ───────────────────────────────────────────────────────────────────
+# Logging page
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(levelname)s %(name)s %(message)s'
@@ -30,19 +25,16 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-# ── Initialise services ───────────────────────────────────────────────────────
+#Initialise services 
 outfit_engine = OutfitEngine()
 queue_service  = QueueService()
 cache_service  = CacheService()
 
-# ── Initialise SQLite database ────────────────────────────────────────────────
+# ── Initialise SQLite database 
 init_db()
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  API KEY CONFIGURATION  (loaded from SQLite, fallback to env vars)
-# ══════════════════════════════════════════════════════════════════════════════
-
-# 1. OpenWeatherMap
+# #  API KEY CONFIGURATION  (loaded from SQLite, fallback to env vars)
+## 1. OpenWeatherMap
 OWM_API_KEY  = get_api_key("OWM_API_KEY")  or os.environ.get("OWM_API_KEY",  "568d4f6a784fd23816ccfad2e96eb4a1")
 OWM_BASE_URL = os.environ.get("OWM_BASE_URL", "https://api.openweathermap.org/data/2.5")
 
@@ -59,9 +51,7 @@ logger.info("OWM key     : %s…", OWM_API_KEY[:8])
 logger.info("Friend API  : %s",  FRIEND_API_BASE)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  HELPER — OpenWeatherMap
-# ══════════════════════════════════════════════════════════════════════════════
 
 def fetch_live_weather(city: str, country_code: str = "IE") -> dict:
     """Fetch live weather from OpenWeatherMap."""
@@ -86,9 +76,7 @@ def fetch_live_weather(city: str, country_code: str = "IE") -> dict:
         return None
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  HELPER — Friend Poll Hub API
-# ══════════════════════════════════════════════════════════════════════════════
 
 def fetch_friend_polls() -> dict:
     """Fetch polls from classmate Poll Hub API."""
@@ -111,9 +99,7 @@ def fetch_friend_polls() -> dict:
         return {"success": False, "error": str(exc),              "data": []}
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  Health / Info
-# ══════════════════════════════════════════════════════════════════════════════
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -151,9 +137,7 @@ def api_info():
     }), 200
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  SQLite Config endpoints
-# ══════════════════════════════════════════════════════════════════════════════
+#  SQLite endpoints
 
 @app.route('/api/config', methods=['GET'])
 def get_config():
@@ -178,22 +162,12 @@ def update_config():
             updated.append(key)
     return jsonify({"success": True, "updated": updated})
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  Outfit History (SQLite)
-# ══════════════════════════════════════════════════════════════════════════════
-
 @app.route('/api/history', methods=['GET'])
 def outfit_history():
     """Return recent outfit history from SQLite."""
     limit   = int(request.args.get('limit', 10))
     history = get_outfit_history(limit)
     return jsonify({"success": True, "history": history, "count": len(history)})
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  Weather endpoint (OpenWeatherMap)
-# ══════════════════════════════════════════════════════════════════════════════
 
 @app.route('/api/weather/<path:city>', methods=['GET'])
 def get_weather(city):
@@ -207,12 +181,6 @@ def get_weather(city):
     if not weather:
         return jsonify({"error": f"Could not fetch weather for '{city}'"}), 502
     return jsonify({"success": True, "source": "OpenWeatherMap", "weather": weather})
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  Friend Poll Hub API endpoints
-# ══════════════════════════════════════════════════════════════════════════════
-
 
 @app.route('/api/friend/polls', methods=['GET', 'POST'])
 def friend_polls_create():
@@ -276,11 +244,6 @@ def vote_poll(poll_id):
         return jsonify({"success": True, "data": resp.json()})
     except Exception as exc:
         return jsonify({"success": False, "error": str(exc)}), 502
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  Core recommendation endpoint
-# ══════════════════════════════════════════════════════════════════════════════
 
 @app.route('/api/recommend', methods=['POST'])
 def recommend():
@@ -348,7 +311,7 @@ def recommend():
             occasion=occasion, gender=gender, preferred_colors=preferred_colors
         )
 
-        # Save to SQLite history
+        #SQLite history
         try:
             save_outfit_history(
                 city=city, temperature=temperature,
@@ -398,11 +361,6 @@ def poll_recommendation(job_id):
         return jsonify({"status": "pending", "job_id": job_id}), 202
     return jsonify(result), 200
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  Outfit catalogue
-# ══════════════════════════════════════════════════════════════════════════════
-
 @app.route('/api/outfits', methods=['GET'])
 def list_outfits():
     occasion = request.args.get('occasion')
@@ -413,11 +371,6 @@ def list_outfits():
                     "filters": {"occasion": occasion, "weather": weather, "gender": gender},
                     "outfits": outfits}), 200
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  Error handlers
-# ══════════════════════════════════════════════════════════════════════════════
-
 @app.errorhandler(404)
 def not_found(e):
     return jsonify({"error": "Not found"}), 404
@@ -425,11 +378,6 @@ def not_found(e):
 @app.errorhandler(405)
 def method_not_allowed(e):
     return jsonify({"error": "Method not allowed"}), 405
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  Serve frontend
-# ══════════════════════════════════════════════════════════════════════════════
 
 @app.route('/')
 def serve_frontend():
@@ -440,11 +388,6 @@ def serve_frontend():
 def serve_static(path):
     frontend_dir = os.path.join(os.path.dirname(__file__), 'frontend')
     return send_from_directory(frontend_dir, path)
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  Entry point
-# ══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == '__main__':
     port  = int(os.environ.get('PORT', 8000))
