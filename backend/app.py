@@ -30,11 +30,9 @@ outfit_engine = OutfitEngine()
 queue_service  = QueueService()
 cache_service  = CacheService()
 
-# ── Initialise SQLite database 
+# init
 init_db()
 
-# #  API KEY CONFIGURATION  (loaded from SQLite, fallback to env vars)
-## 1. OpenWeatherMap
 OWM_API_KEY  = get_api_key("OWM_API_KEY")  or os.environ.get("OWM_API_KEY",  "568d4f6a784fd23816ccfad2e96eb4a1")
 OWM_BASE_URL = os.environ.get("OWM_BASE_URL", "https://api.openweathermap.org/data/2.5")
 
@@ -51,7 +49,7 @@ logger.info("OWM key     : %s…", OWM_API_KEY[:8])
 logger.info("Friend API  : %s",  FRIEND_API_BASE)
 
 
-#  HELPER — OpenWeatherMap
+# WeatherMap
 
 def fetch_live_weather(city: str, country_code: str = "IE") -> dict:
     """Fetch live weather from OpenWeatherMap."""
@@ -75,8 +73,6 @@ def fetch_live_weather(city: str, country_code: str = "IE") -> dict:
         logger.error("OWM error: %s", exc)
         return None
 
-
-#  HELPER — Friend Poll Hub API
 
 def fetch_friend_polls() -> dict:
     """Fetch polls from classmate Poll Hub API."""
@@ -322,8 +318,7 @@ def recommend():
         except Exception as e:
             logger.warning("History save failed: %s", e)
 
-        # Also fetch friend polls
-        friend_data = fetch_friend_polls()
+              friend_data = fetch_friend_polls()
 
         response = {
             "status":     "success",
