@@ -1,18 +1,9 @@
-"""
-Unit + integration tests for the Outfit Recommendation API
-Run: pytest tests.py -v
-"""
 
 import json
 import pytest
 from app import app
 from outfit_engine import OutfitEngine, _temp_band, _comfort_score
 from cache_service import CacheService
-
-
-# ─────────────────────────────────────────────
-#  Fixtures
-# ─────────────────────────────────────────────
 
 @pytest.fixture
 def client():
@@ -24,11 +15,6 @@ def client():
 @pytest.fixture
 def engine():
     return OutfitEngine()
-
-
-# ─────────────────────────────────────────────
-#  Health endpoint
-# ─────────────────────────────────────────────
 
 def test_health(client):
     r = client.get('/health')
@@ -42,11 +28,6 @@ def test_api_info(client):
     assert r.status_code == 200
     data = json.loads(r.data)
     assert 'endpoints' in data
-
-
-# ─────────────────────────────────────────────
-#  Recommendation endpoint
-# ─────────────────────────────────────────────
 
 def test_recommend_sunny_casual(client):
     payload = {
@@ -134,11 +115,6 @@ def test_recommend_async(client):
     assert 'job_id' in data
     assert 'poll_url' in data
 
-
-# ─────────────────────────────────────────────
-#  Catalogue endpoint
-# ─────────────────────────────────────────────
-
 def test_list_outfits(client):
     r = client.get('/api/outfits')
     assert r.status_code == 200
@@ -153,11 +129,6 @@ def test_list_outfits_filtered(client):
     data = json.loads(r.data)
     for item in data['outfits']:
         assert 'formal' in item['occasion_tags']
-
-
-# ─────────────────────────────────────────────
-#  Outfit engine unit tests
-# ─────────────────────────────────────────────
 
 @pytest.mark.parametrize("temp,expected", [
     (30, "hot"), (22, "warm"), (15, "mild"), (5, "cold"), (-2, "freezing")
@@ -194,11 +165,6 @@ def test_engine_returns_all_required_keys(engine):
                 'tips', 'comfort_score', 'style_notes', 'color_palette']:
         assert key in rec
 
-
-# ─────────────────────────────────────────────
-#  Cache service unit tests
-# ─────────────────────────────────────────────
-
 def test_cache_set_get():
     cache = CacheService()
     key = cache.make_key(20, "sunny", 50, 5, "casual", "unisex")
@@ -230,12 +196,6 @@ def test_cache_eviction():
     cache.set(k2, {"b": 2})
     cache.set(k3, {"c": 3})
     assert cache.size <= 2
-
-
-# ─────────────────────────────────────────────
-#  Error handlers
-# ─────────────────────────────────────────────
-
 def test_404(client):
     r = client.get('/does-not-exist')
     assert r.status_code == 404
