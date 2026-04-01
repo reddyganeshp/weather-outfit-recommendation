@@ -318,7 +318,7 @@ def recommend():
         except Exception as e:
             logger.warning("History save failed: %s", e)
 
-              friend_data = fetch_friend_polls()
+        friend_data = fetch_friend_polls()
 
         response = {
             "status":     "success",
