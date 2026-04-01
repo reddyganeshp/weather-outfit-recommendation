@@ -1,8 +1,3 @@
-"""
-Queue Service
-Simulates AWS SQS (or any message queue) for async outfit recommendation jobs.
-In production this is replaced by boto3 SQS calls — the interface stays identical.
-"""
 
 from __future__ import annotations
 import threading
@@ -39,7 +34,7 @@ class QueueService:
         with self._lock:
             return self._results.get(job_id)
 
-    # ── background worker ──
+    #back
 
     def _process_loop(self):
         """Continuously process queued jobs."""
