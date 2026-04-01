@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WeatherWear</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --accent: #2563eb; --accent-dark: #1d4ed8;
+    --success: #16a34a; --warn: #d97706; --danger: #dc2626;
+    --bg: #f8fafc; --card: #ffffff; --text: #1e293b;
+    --muted: #64748b; --border: #e2e8f0; --radius: 14px;
+    --shadow: 0 2px 12px rgba(0,0,0,.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,.15);
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(160deg, #e8f4fd 0%, #dbeafe 100%);
+    min-height: 100vh; color: var(--text); line-height: 1.6; }
+  #login-page { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:1.5rem; }
+  .login-box { background:#fff; border-radius:20px; box-shadow:var(--shadow-lg);
+    padding:2.5rem 2rem; width:100%; max-width:420px; animation:slideUp .4s ease; }
+  @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:none} }
+  .login-logo { text-align:center; margin-bottom:1.8rem; }
+  .login-logo .icon { font-size:3rem; display:block; margin-bottom:.5rem; }
+  .login-logo h1 { font-size:1.6rem; font-weight:800; color:var(--accent); }
+  .login-logo h1 span { color:var(--text); }
+  .login-logo p { font-size:.85rem; color:var(--muted); margin-top:.25rem; }
+  .tabs-auth { display:flex; border-bottom:2px solid var(--border); margin-bottom:1.5rem; }
+  .tab-auth { flex:1; padding:.6rem; text-align:center; cursor:pointer; border:none;
+    background:none; font-size:.9rem; font-weight:600; color:var(--muted);
+    border-bottom:2px solid transparent; margin-bottom:-2px; transition:all .2s; }
+  .tab-auth.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .form-group { margin-bottom:1rem; }
+  .form-group label { display:block; font-size:.82rem; font-weight:600; color:var(--muted); margin-bottom:.35rem; }
+  .input-wrap { position:relative; }
+  .input-icon { position:absolute; left:.75rem; top:50%; transform:translateY(-50%); font-size:1rem; pointer-events:none; }
+  .input-wrap input { width:100%; border:1.5px solid var(--border); border-radius:10px;
+    padding:.65rem .8rem .65rem 2.4rem; font-size:.92rem; color:var(--text);
+    background:var(--bg); transition:border-color .2s, box-shadow .2s; }
+  .input-wrap input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+  .btn-auth { width:100%; padding:.75rem; background:var(--accent); color:#fff;
+    border:none; border-radius:10px; font-size:1rem; font-weight:700;
+    cursor:pointer; transition:background .2s; margin-top:.5rem; }
+  .btn-auth:hover { background:var(--accent-dark); }
+  .btn-auth:disabled { opacity:.6; cursor:not-allowed; }
+  .msg-error { background:#fef2f2; border:1px solid #fecaca; border-radius:8px;
+    padding:.65rem .9rem; color:#991b1b; font-size:.85rem; margin-top:.75rem; display:none; }
+  .msg-success { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px;
+    padding:.65rem .9rem; color:#15803d; font-size:.85rem; margin-top:.75rem; display:none; }
+  #app-page { display:none; }
+  nav { background:rgba(255,255,255,.95); border-bottom:1px solid var(--border);
+    position:sticky; top:0; z-index:100; padding:.75rem 1.5rem;
+    display:flex; align-items:center; gap:1rem; }
+  .logo { font-size:1.25rem; font-weight:800; color:var(--accent); }
+  .logo span { color:var(--text); }
+  .nav-right { margin-left:auto; display:flex; align-items:center; gap:.75rem; }
+  .user-chip { display:flex; align-items:center; gap:.45rem; background:var(--bg);
+    border:1px solid var(--border); border-radius:20px; padding:.3rem .9rem; font-size:.82rem; font-weight:500; }
+  .avatar { width:26px; height:26px; border-radius:50%; background:var(--accent);
+    color:#fff; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; }
+  .btn-logout { background:none; border:1px solid var(--border); border-radius:8px;
+    padding:.3rem .75rem; font-size:.8rem; color:var(--muted); cursor:pointer; transition:all .2s; }
+  .btn-logout:hover { background:#fef2f2; color:var(--danger); border-color:#fecaca; }
+  main { max-width:960px; margin:0 auto; padding:2rem 1.25rem 4rem; }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
+  @media(max-width:640px){ .grid-2 { grid-template-columns:1fr; } }
+  .card { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); box-shadow:var(--shadow); padding:1.5rem; }
+  .card-title { font-size:1rem; font-weight:600; margin-bottom:1rem; display:flex; align-items:center; gap:.45rem; }
+  label { display:block; font-size:.82rem; font-weight:500; color:var(--muted); margin-bottom:.3rem; }
+  input, select { width:100%; border:1.5px solid var(--border); border-radius:9px;
+    padding:.55rem .8rem; font-size:.92rem; color:var(--text); background:var(--bg); transition:border-color .2s; }
+  input:focus, select:focus { outline:none; border-color:var(--accent); }
+  .form-row { margin-bottom:.9rem; }
+  .btn { display:inline-flex; align-items:center; gap:.4rem; padding:.65rem 1.4rem;
+    border-radius:10px; border:none; font-size:.92rem; font-weight:600; cursor:pointer; transition:all .15s; }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-primary:hover { background:var(--accent-dark); }
+  .btn-secondary { background:var(--bg); color:var(--accent); border:1.5px solid var(--accent); }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .btn-full { width:100%; justify-content:center; }
+  .weather-widget { background:linear-gradient(135deg,#1e40af,#3b82f6,#60a5fa);
+    color:#fff; border-radius:var(--radius); padding:1.5rem; box-shadow:var(--shadow-lg); }
+  .weather-temp { font-size:3rem; font-weight:800; line-height:1; margin:.3rem 0; }
+  .weather-details { display:flex; gap:1.2rem; margin-top:.8rem; font-size:.82rem; opacity:.85; }
+  .weather-badge { display:inline-block; background:rgba(255,255,255,.2); border-radius:20px; padding:.2rem .7rem; margin-top:.5rem; font-size:.8rem; }
+  .status-bar { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1.5rem;
+    padding:.75rem 1rem; background:var(--card); border-radius:10px; border:1px solid var(--border); font-size:.78rem; }
+  .status-item { display:flex; align-items:center; gap:.35rem; color:var(--muted); }
+  .dot { width:8px; height:8px; border-radius:50%; background:#d1d5db; }
+  .dot.ok { background:var(--success); } .dot.err { background:var(--danger); }
+  .dot.loading { background:var(--warn); animation:pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .spinner { width:28px; height:28px; border:3px solid var(--border);
+    border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; margin:1.5rem auto; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .outfit-result { animation:fadeIn .4s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+  .outfit-header { background:linear-gradient(135deg,#f0fdf4,#dcfce7); border:1px solid #bbf7d0;
+    border-radius:var(--radius); padding:1.2rem 1.4rem; margin-bottom:1rem;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.5rem; }
+  .outfit-name { font-size:1.2rem; font-weight:700; color:#15803d; }
+  .comfort-badge { background:#15803d; color:#fff; border-radius:20px; padding:.3rem .9rem; font-size:.82rem; font-weight:600; }
+  .items-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:.8rem; margin-bottom:1rem; }
+  .item-card { background:var(--bg); border:1.5px solid var(--border); border-radius:11px; padding:1rem; }
+  .item-category { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--accent); margin-bottom:.3rem; }
+  .item-name { font-weight:600; font-size:.92rem; margin-bottom:.25rem; }
+  .item-desc { font-size:.8rem; color:var(--muted); margin-bottom:.4rem; }
+  .pill-list { display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:.8rem; }
+  .pill { background:#eff6ff; color:#1d4ed8; border-radius:20px; padding:.25rem .75rem; font-size:.78rem; font-weight:500; border:1px solid #bfdbfe; }
+  .tip-list { list-style:none; }
+  .tip-list li { padding:.45rem 0 .45rem 1.4rem; position:relative; font-size:.88rem; border-bottom:1px solid var(--border); }
+  .tip-list li:last-child { border-bottom:none; }
+  .tip-list li::before { content:"💡"; position:absolute; left:0; }
+  .style-note { background:#faf5ff; border-left:3px solid #7c3aed; border-radius:0 8px 8px 0;
+    padding:.8rem 1rem; font-size:.88rem; color:#4c1d95; font-style:italic; margin-top:.6rem; }
+  .error-box { background:#fef2f2; border:1px solid #fecaca; border-radius:10px;
+    padding:.9rem 1.1rem; color:#991b1b; font-size:.88rem; margin-top:.8rem; }
+  .empty { text-align:center; padding:2rem; color:var(--muted); font-size:.9rem; }
+  .tabs { display:flex; gap:.3rem; margin-bottom:1.25rem; border-bottom:2px solid var(--border); }
+  .tab { padding:.5rem 1rem; cursor:pointer; border:none; background:none;
+    font-size:.88rem; font-weight:500; color:var(--muted);
+    border-bottom:2px solid transparent; margin-bottom:-2px; transition:all .2s; }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .tab-panel { display:none; } .tab-panel.active { display:block; }
+  .key-box { background:#fefce8; border:1px solid #fde68a; border-radius:10px; padding:1rem; margin-bottom:1rem; font-size:.85rem; }
+  .key-box strong { color:#92400e; } .key-box a { color:var(--accent); }
+  .welcome-banner { background:linear-gradient(135deg,#eff6ff,#e0f2fe); border:1px solid #bae6fd;
+    border-radius:var(--radius); padding:1rem 1.25rem; margin-bottom:1.25rem;
+    display:flex; align-items:center; gap:.75rem; font-size:.9rem; }
+</style>
+</head>
+<body>
+
+<div id="login-page">
+  <div class="login-box">
+    <div class="login-logo">
+      <span class="icon">&#127774;</span>
+      <h1>Weather<span>Wear</span></h1>
+      
+    </div>
+    <div class="tabs-auth">
+      <button class="tab-auth active" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="tab-auth" onclick="switchAuthTab('register')">Create Account</button>
+    </div>
+    <div id="auth-login">
+      <div class="form-group">
+        <label>Username or Email</label>
+        <div class="input-wrap">
+          <span class="input-icon">&#128100;</span>
+          <input type="text" id="login-user" placeholder="Enter username"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">&#128274;</span>
+          <input type="password" id="login-pass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div>
+      </div>
+      <button class="btn-auth" id="btn-login" onclick="doLogin()">Sign In</button>
+      <div class="msg-error" id="login-err"></div>
+    </div>
+    <div id="auth-register" style="display:none;">
+      <div class="form-group">
+        <label>Full Name</label>
+        <div class="input-wrap">
+          <span class="input-icon">&#9998;</span>
+          <input type="text" id="reg-name" placeholder="Your full name"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Username</label>
+        <div class="input-wrap">
+          <span class="input-icon">&#128100;</span>
+          <input type="text" id="reg-user" placeholder="Choose a username"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <div class="input-wrap">
+          <span class="input-icon">&#128231;</span>
+          <input type="email" id="reg-email" placeholder="your@email.com"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">&#128274;</span>
+          <input type="password" id="reg-pass" placeholder="Min 4 characters"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">&#128274;</span>
+          <input type="password" id="reg-confirm" placeholder="Repeat password" onkeydown="if(event.key==='Enter')doRegister()"/>
+        </div>
+      </div>
+      <button class="btn-auth" id="btn-reg" onclick="doRegister()">Create Account</button>
+      <div class="msg-error" id="reg-err"></div>
+      <div class="msg-success" id="reg-ok"></div>
+    </div>
+  </div>
+</div>
+
+<div id="app-page">
+  <nav>
+    <div class="logo">Weather<span>Wear</span></div>
+    <div class="nav-right">
+      <div class="user-chip">
+        <div class="avatar" id="nav-av">?</div>
+        <span id="nav-name">User</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Sign out</button>
+    </div>
+  </nav>
+  <main>
+    <div class="welcome-banner">
+      <span style="font-size:1.4rem;">&#128075;</span>
+      <div>
+        <strong id="welcome-name">Welcome!</strong>
+        
+      </div>
+    </div>
+    <div class="status-bar">
+      
+      
+      
+      <div class="status-item"><div class="dot loading" id="dot-weather"></div> OpenWeatherMap</div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('recommend')">Get Recommendation</button>
+      
+      
+    </div>
+    <div class="tab-panel active" id="tab-recommend">
+      <div class="grid-2">
+        <div style="display:flex;flex-direction:column;gap:1.25rem;">
+          <div class="weather-widget">
+            <div id="w-city" style="font-size:1.1rem;font-weight:600;opacity:.9;">Enter city below...</div>
+            <div class="weather-temp" id="w-temp">--C</div>
+            <div id="w-cond" style="font-size:.95rem;opacity:.85;">--</div>
+            <div class="weather-details">
+              <span>&#128167; <span id="w-hum">--%</span></span>
+              <span>&#127788; <span id="w-wind">-- km/h</span></span>
+            </div>
+            <span class="weather-badge">OpenWeatherMap API</span>
+          </div>
+          <div class="card">
+            <div class="card-title">&#9881; Weather Settings</div>
+            <div class="form-row">
+              <label>City</label>
+              <div style="display:flex;gap:.5rem;">
+                <select id="city-input" style="flex:1;padding:.5rem;border-radius:6px;border:1px solid #ccc;font-size:.95rem;">
+  <option value="Dublin">🇮🇪 Dublin, Ireland</option>
+  <option value="London">🇬🇧 London, UK</option>
+  <option value="Cork">🇮🇪 Cork, Ireland</option>
+  <option value="Galway">🇮🇪 Galway, Ireland</option>
+  <option value="Belfast,GB">🇬🇧 Belfast, UK</option>
+</select>
+                <button class="btn btn-secondary" onclick="fetchWeather()">Go</button>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>Override Temperature (C) optional</label>
+              <input type="number" id="temp-override" placeholder="Leave blank to use live data"/>
+            </div>
+            <div class="form-row">
+              <label>Override Condition optional</label>
+              <select id="cond-override">
+                <option value="">Use live data</option>
+                <option value="sunny">Sunny</option>
+                <option value="cloudy">Cloudy</option>
+                <option value="rainy">Rainy</option>
+                <option value="snowy">Snowy</option>
+                <option value="windy">Windy</option>
+              </select>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">&#127774; Preferences</div>
+            <div class="form-row">
+              <label>Occasion</label>
+              <select id="occasion">
+                <option value="casual">Casual</option>
+                <option value="work">Work / Office</option>
+                <option value="formal">Formal</option>
+                <option value="outdoor">Outdoor</option>
+                <option value="sport">Sport / Active</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Gender preference</label>
+              <select id="gender">
+                <option value="unisex">Unisex / Any</option>
+                <option value="female">Feminine</option>
+                <option value="male">Masculine</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Preferred colours (comma-separated)</label>
+              <input type="text" id="colors" placeholder="e.g. navy, white, olive"/>
+            </div>
+            <button class="btn btn-primary btn-full" id="rec-btn" onclick="getRecommendation()">Get Outfit Recommendation</button>
+            <div id="rec-error"></div>
+          </div>
+        </div>
+        <div>
+          <div id="rec-result">
+            <div class="empty">
+              <div style="font-size:2.5rem;margin-bottom:.5rem;">&#128090;</div>
+              <p>Set your city and preferences then click <strong>Get Outfit Recommendation</strong>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+      </div>
+    </div>
+    
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+function getUsers(){
+  const s=localStorage.getItem("ww_users");
+  if(s) return JSON.parse(s);
+  const d=[
+    {username:"admin",email:"admin@ww.com",name:"Admin User",password:"admin123"},
+    {username:"student",email:"student@ww.com",name:"Student User",password:"pass123"}
+  ];
+  localStorage.setItem("ww_users",JSON.stringify(d));
+  return d;
+}
+function saveUsers(u){localStorage.setItem("ww_users",JSON.stringify(u));}
+function currentUser(){const s=sessionStorage.getItem("ww_me");return s?JSON.parse(s):null;}
+function setCurrentUser(u){sessionStorage.setItem("ww_me",JSON.stringify(u));}
+
+function switchAuthTab(tab){
+  document.querySelectorAll(".tab-auth").forEach(t=>t.classList.remove("active"));
+  document.getElementById("auth-login").style.display=tab==="login"?"":"none";
+  document.getElementById("auth-register").style.display=tab==="register"?"":"none";
+  document.querySelectorAll(".tab-auth")[tab==="login"?0:1].classList.add("active");
+}
+
+function showErr(id,msg){const e=document.getElementById(id);e.textContent=msg;e.style.display="block";}
+function hideMsg(id){document.getElementById(id).style.display="none";}
+
+function doLogin(){
+  hideMsg("login-err");
+  const user=document.getElementById("login-user").value.trim();
+  const pass=document.getElementById("login-pass").value;
+  const btn=document.getElementById("btn-login");
+  if(!user||!pass){showErr("login-err","Please enter username and password.");return;}
+  btn.disabled=true;btn.textContent="Signing in...";
+  setTimeout(()=>{
+    const found=getUsers().find(u=>(u.username===user||u.email===user)&&u.password===pass);
+    btn.disabled=false;btn.textContent="Sign In";
+    if(!found){showErr("login-err","Incorrect username or password.");return;}
+    setCurrentUser(found);launchApp(found);
+  },500);
+}
+
+function doRegister(){
+  hideMsg("reg-err");hideMsg("reg-ok");
+  const name=document.getElementById("reg-name").value.trim();
+  const uname=document.getElementById("reg-user").value.trim();
+  const email=document.getElementById("reg-email").value.trim();
+  const pass=document.getElementById("reg-pass").value;
+  const confirm=document.getElementById("reg-confirm").value;
+  const btn=document.getElementById("btn-reg");
+  if(!name||!uname||!email||!pass){showErr("reg-err","Please fill in all fields.");return;}
+  if(pass.length<4){showErr("reg-err","Password must be at least 4 characters.");return;}
+  if(pass!==confirm){showErr("reg-err","Passwords do not match.");return;}
+  const users=getUsers();
+  if(users.find(u=>u.username===uname)){showErr("reg-err","Username already taken.");return;}
+  if(users.find(u=>u.email===email)){showErr("reg-err","Email already registered.");return;}
+  btn.disabled=true;btn.textContent="Creating...";
+  setTimeout(()=>{
+    users.push({username:uname,email:email,name:name,password:pass});
+    saveUsers(users);
+    btn.disabled=false;btn.textContent="Create Account";
+    const ok=document.getElementById("reg-ok");
+    ok.textContent="Account created! Signing you in...";ok.style.display="block";
+    setTimeout(()=>{const nu=getUsers().find(u=>u.username===uname);setCurrentUser(nu);launchApp(nu);},1000);
+  },600);
+}
+
+function doLogout(){
+  sessionStorage.removeItem("ww_me");
+  document.getElementById("app-page").style.display="none";
+  document.getElementById("login-page").style.display="flex";
+  document.getElementById("login-pass").value="";
+  hideMsg("login-err");
+}
+
+function launchApp(user){
+  document.getElementById("login-page").style.display="none";
+  document.getElementById("app-page").style.display="block";
+  document.getElementById("nav-name").textContent=user.name||user.username;
+  document.getElementById("nav-av").textContent=(user.name||user.username)[0].toUpperCase();
+  document.getElementById("welcome-name").textContent="Welcome, "+(user.name||user.username)+"!";
+  loadKeys();checkAll();
+  if(getWeatherKey()){const cityInput=document.getElementById("city-input");if(cityInput&&!cityInput.value)cityInput.value="Dublin";fetchWeather();}
+}
+
+function switchTab(name){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
+  ["recommend","keys","about"].forEach((n,i)=>{
+    if(n===name){
+      document.querySelectorAll(".tab")[i].classList.add("active");
+      document.getElementById("tab-"+n).classList.add("active");
+    }
+  });
+}
+
+function pfx(){const u=currentUser();return "ww_"+(u?u.username:"guest")+"_";}
+function getWeatherKey(){return localStorage.getItem(pfx()+"weather")||"";}
+function getFriendUrl(){return "https://c730261bf2bc4236bcd5fd5f1d1c84bc.vfs.cloud9.us-east-1.amazonaws.com";}
+function getFriendKey(){return localStorage.getItem(pfx()+"fkey")||"";}
+function loadKeys(){
+  document.getElementById("key-weather").value=getWeatherKey();
+  document.getElementById("key-friend-url").value=getFriendUrl();
+  document.getElementById("key-friend-key").value=getFriendKey();
+}
+function saveKeys(){
+  localStorage.setItem(pfx()+"weather",document.getElementById("key-weather").value.trim());
+  localStorage.setItem(pfx()+"furl",document.getElementById("key-friend-url").value.trim());
+  localStorage.setItem(pfx()+"fkey",document.getElementById("key-friend-key").value.trim());
+  document.getElementById("keys-msg").innerHTML="<span style='color:var(--success)'>Keys saved!</span>";
+  checkAll();
+}
+
+async function checkAll(){
+  try{const r=await fetch("/health",{signal:AbortSignal.timeout(4000)});
+    document.getElementById("dot-outfit").className=r.ok?"dot ok":"dot err";}
+  catch{document.getElementById("dot-outfit").className="dot err";}
+  try{const r=await fetch(getFriendUrl()+"/health",{signal:AbortSignal.timeout(4000)});
+    document.getElementById("dot-friend").className=r.ok?"dot ok":"dot err";}
+  catch{document.getElementById("dot-friend").className="dot err";}
+  const wk=getWeatherKey();
+  if(!wk){document.getElementById("dot-weather").className="dot err";return;}
+  try{const r=await fetch("https://api.openweathermap.org/data/2.5/weather?q=Dublin&appid="+wk,{signal:AbortSignal.timeout(5000)});
+    document.getElementById("dot-weather").className=r.ok?"dot ok":"dot err";}
+  catch{document.getElementById("dot-weather").className="dot err";}
+}
+
+async function fetchWeather(){
+  const city=document.getElementById("city-input").value.trim()||"Dublin";
+  // Use backend proxy instead of calling OWM directly
+  try{
+    const backendResp=await fetch("/api/weather/"+encodeURIComponent(city));
+    if(backendResp.ok){
+      const backendData=await backendResp.json();
+      if(backendData.success){
+        const w=backendData.weather;
+        window._wx={temperature:w.temperature,humidity:w.humidity,
+          weather_condition:w.weather_condition,wind_speed:w.wind_speed,city:w.city};
+        document.getElementById("w-city").textContent=w.city+", "+w.country;
+        document.getElementById("w-temp").textContent=Math.round(w.temperature)+"°C";
+        document.getElementById("w-hum").textContent=w.humidity+"%";
+        document.getElementById("w-wind").textContent=w.wind_speed+" km/h";
+        return;
+      }
+    }
+  }catch(e){console.log("Backend weather failed, trying direct",e);}
+  const key=getWeatherKey();
+  if(!key){key="568d4f6a784fd23816ccfad2e96eb4a1";}
+  try{
+    const r=await fetch("https://api.openweathermap.org/data/2.5/weather?q="+encodeURIComponent(city)+"&appid="+key+"&units=metric");
+    if(!r.ok)throw new Error("City not found or invalid key");
+    const d=await r.json();
+    window._wx={temperature:d.main.temp,humidity:d.main.humidity,
+      wind_speed:Math.round(d.wind.speed*3.6),condition:owmCond(d.weather[0].id),
+      city:d.name+", "+d.sys.country};
+    document.getElementById("w-city").textContent=window._wx.city;
+    document.getElementById("w-temp").textContent=Math.round(d.main.temp)+"°C";
+    document.getElementById("w-cond").textContent=d.weather[0].description;
+    document.getElementById("w-hum").textContent=d.main.humidity+"%";
+    document.getElementById("w-wind").textContent=window._wx.wind_speed+" km/h";
+    document.getElementById("dot-weather").className="dot ok";
+  }catch(e){
+    document.getElementById("w-city").textContent="Weather unavailable";
+    document.getElementById("dot-weather").className="dot err";
+  }
+}
+
+function owmCond(id){
+  if(id===800)return "sunny";
+  if(id>800)return "cloudy";
+  if(id>=600)return "snowy";
+  if(id>=300)return "rainy";
+  if(id>=200)return "rainy";
+  return "cloudy";
+}
+
+async function getRecommendation(){
+  const btn=document.getElementById("rec-btn");
+  const result=document.getElementById("rec-result");
+  const errDiv=document.getElementById("rec-error");
+  btn.disabled=true;btn.textContent="Loading...";
+  errDiv.innerHTML="";result.innerHTML="<div class='spinner'></div>";
+  try{
+    const wx=window._wx||{};
+    const t=document.getElementById("temp-override").value;
+    const c=document.getElementById("cond-override").value;
+    const payload={
+      temperature:t?parseFloat(t):(wx.temperature||18),
+      weather_condition:c||wx.condition||"cloudy",
+      humidity:wx.humidity||55,wind_speed:wx.wind_speed||10,
+      occasion:document.getElementById("occasion").value,
+      gender:document.getElementById("gender").value,
+      preferred_colors:document.getElementById("colors").value.split(",").map(x=>x.trim()).filter(Boolean)
+    };
+    const fUrl=getFriendUrl(),fKey=getFriendKey();
+    const pid=localStorage.getItem("profileId");
+    if(pid&&fUrl){
+      try{
+        const h=fKey?{"X-API-Key":fKey}:{};
+        const pr=await fetch(fUrl+"/api/profiles/"+pid,{headers:h});
+        if(pr.ok){const pd=await pr.json();
+          if(pd.preferred_colors&&pd.preferred_colors.length)payload.preferred_colors=pd.preferred_colors;
+          if(pd.gender)payload.gender=pd.gender;}
+      }catch{}
+    }
+    const res=await fetch("/api/recommend",{method:"POST",
+      headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||"API error");
+    renderRec(data.recommendation,payload);
+  }catch(e){
+    result.innerHTML="";
+    errDiv.innerHTML="<div class='error-box'>"+e.message+"</div>";
+  }finally{btn.disabled=false;btn.textContent="Get Outfit Recommendation";}
+}
+
+function renderRec(rec,input){
+  const cc=rec.comfort_score>=7?"#15803d":rec.comfort_score>=4?"#b45309":"#dc2626";
+  const items=rec.items.map(i=>"<div class='item-card'><div class='item-category'>"+i.category+"</div><div class='item-name'>"+i.name+"</div><div class='item-desc'>"+i.description+"</div><div style='font-size:.75rem;color:var(--muted);'>"+i.chosen_color+"</div></div>").join("");
+  const acc=rec.accessories.map(a=>"<span class='pill'>"+a+"</span>").join("");
+  const tips=rec.tips.map(t=>"<li>"+t+"</li>").join("");
+  document.getElementById("rec-result").innerHTML="<div class='outfit-result'><div class='outfit-header'><div><div class='outfit-name'>"+rec.outfit_name+"</div><div style='font-size:.8rem;color:#15803d;margin-top:.2rem;'>"+input.occasion+" "+Math.round(input.temperature)+"C "+input.weather_condition+"</div></div><div class='comfort-badge' style='background:"+cc+"'>Comfort "+rec.comfort_score+"/10</div></div><div style='font-size:.82rem;font-weight:600;color:var(--muted);margin-bottom:.5rem;'>Outfit items</div><div class='items-grid'>"+items+"</div><div style='font-size:.82rem;font-weight:600;color:var(--muted);margin-bottom:.5rem;'>Accessories</div><div class='pill-list'>"+acc+"</div><div style='font-size:.82rem;font-weight:600;color:var(--muted);margin-bottom:.5rem;'>Style tips</div><ul class='tip-list'>"+tips+"</ul><div class='style-note'>"+rec.style_notes+"</div></div>";
+}
+
+window.addEventListener("load",()=>{
+  const u=currentUser();
+  if(u)launchApp(u);
+});
+</script>
+
+
+
+
+
+<div style="max-width:900px;margin:1.5rem auto;padding:0 1rem;">
+  <div style="background:white;border-radius:12px;padding:1.5rem;box-shadow:0 2px 12px rgba(0,0,0,.08);">
+    <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem;color:#1a1a2e;">
+      &#128202; Friend PollHub — Active Polls
+      <span style="font-size:.75rem;font-weight:400;color:#888;margin-left:.5rem;">via Classmate API</span>
+    </h3>
+    
+<div style="background:white;border-radius:12px;padding:1.5rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-top:1rem;">
+  <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;color:#1a1a2e;">
+    &#10133; Create a Poll on Friend PollHub
+  </h3>
+  <div style="display:flex;flex-direction:column;gap:.7rem;">
+    <input id="poll-question" placeholder="Question e.g. Best outfit colour?" 
+      style="padding:.5rem;border-radius:6px;border:1px solid #ccc;font-size:.9rem;"/>
+    <input id="poll-options" placeholder="Options (comma-separated) e.g. red,blue,green"
+      style="padding:.5rem;border-radius:6px;border:1px solid #ccc;font-size:.9rem;"/>
+    <select id="poll-category" style="padding:.5rem;border-radius:6px;border:1px solid #ccc;font-size:.9rem;">
+      <option value="other">Other</option>
+      <option value="tech">Tech</option>
+      <option value="sport">Sport</option>
+      <option value="food">Food</option>
+      <option value="fashion">Fashion</option>
+    </select>
+    <button onclick="createPoll()" 
+      style="padding:.6rem;background:#4A90D9;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+      Submit Poll &#128228;
+    </button>
+    <div id="poll-create-msg" style="font-size:.85rem;"></div>
+  </div>
+</div>
+<script>
+async function createPoll(){
+  const question = document.getElementById('poll-question').value.trim();
+  const optionsRaw = document.getElementById('poll-options').value.trim();
+  const category = document.getElementById('poll-category').value;
+  const msg = document.getElementById('poll-create-msg');
+  const options = optionsRaw.split(',').map(o=>o.trim()).filter(Boolean);
+  if(options.length < 2){msg.innerHTML='<span style="color:red">Need at least 2 options</span>';return;}
+  msg.innerHTML='<span style="color:#888">Submitting...</span>';
+  try{
+    const resp = await fetch('/api/friend/polls',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({question, options, category, created_by:'ganesh'})
+    });
+    const data = await resp.json();
+    if(data.success){
+      msg.innerHTML='<span style="color:green">&#10003; Poll created successfully!</span>';
+      document.getElementById('poll-question').value='';
+      document.getElementById('poll-options').value='';
+      setTimeout(loadPolls, 1000);
+    } else {
+      msg.innerHTML='<span style="color:red">Failed: '+JSON.stringify(data)+'</span>';
+    }
+  }catch(e){
+    msg.innerHTML='<span style="color:red">Error: '+e.message+'</span>';
+  }
+}
+</script>
+<div id="polls-box"><div style="color:#888;font-size:.9rem;">Loading polls...</div></div>
+  </div>
+</div>
+<script>
+async function loadPolls(){
+  try{
+    const resp=await fetch('/api/friend/polls');
+    const json=await resp.json();
+    const polls=json.data&&json.data.data?json.data.data:[];
+    const box=document.getElementById('polls-box');
+    box.innerHTML=polls.map(p=>'<div style="border:1px solid #e8e8e8;border-radius:8px;padding:1rem;margin-bottom:.8rem;"><div style="font-weight:600;margin-bottom:.5rem;">&#10067; '+p.question+'</div><div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem;">'+p.options.map(o=>'<button onclick="vote("'+p.poll_id+'","'+o.id+'")" style="padding:.3rem .8rem;border:1px solid #4A90D9;border-radius:20px;background:white;color:#4A90D9;cursor:pointer;font-size:.85rem;">'+o.text+'</button>').join('')+'</div><div style="font-size:.75rem;color:#888;">by '+p.created_by+' · '+p.category+'</div></div>').join('');
+  }catch(e){document.getElementById('polls-box').innerHTML='<div style="color:#888">Polls unavailable</div>';}
+}
+async function vote(pid,oid){
+  try{
+    await fetch('/api/friend/polls/'+pid+'/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({option_id:oid,voter_token:'user-'+Date.now()})});
+    alert('Vote submitted! ✅');loadPolls();
+  }catch(e){alert('Vote failed');}
+}
+window.addEventListener('load',loadPolls);
+</script>
+</body>
+</html>

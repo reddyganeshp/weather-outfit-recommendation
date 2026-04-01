@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+
+# Environment
+.env
+*.db
+
+# EB
+.elasticbeanstalk/app_versions/
+*.zip
+
+# Logs
+*.log
