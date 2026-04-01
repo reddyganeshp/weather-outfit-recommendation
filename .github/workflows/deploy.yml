@@ -33,5 +33,6 @@ jobs:
           region:                            us-east-1
           version_label:                     ${{ github.sha }}-${{ github.run_number }}
           deployment_package:                deploy.zip
+          existing_bucket_name:              elasticbeanstalk-us-east-1-975050033494
           wait_for_environment_recovery:     300
           use_existing_version_if_available: true
